@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ALTEZ IFC Monitor</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">ALTEZ · BIM QUALITY</div>
+        <h1>IFC Monitor</h1>
+        <p>Controleert over Trimble Connect-projecten heen of IFC-modellen de propertyset <strong>Altez_IFC</strong> bevatten.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="scanBtn" class="primary" disabled>Controleer projecten</button>
+        <button id="stopBtn" class="secondary" hidden>Stop</button>
+      </div>
+    </header>
+
+    <section id="connectionBanner" class="banner info">Verbinding met Trimble Connect wordt opgebouwd…</section>
+
+    <section id="standalonePanel" class="panel standalone" hidden>
+      <div>
+        <h2>Standalone testmodus</h2>
+        <p>Open je deze pagina buiten Trimble Connect, dan kun je tijdelijk een user-context access token plakken. In Trimble Connect zelf is dit niet nodig.</p>
+      </div>
+      <div class="token-row">
+        <input id="tokenInput" type="password" autocomplete="off" placeholder="Trimble access token">
+        <button id="useTokenBtn" class="secondary">Gebruik token</button>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Samenvatting">
+      <article><span>Projecten gevonden</span><strong id="projectCount">0</strong></article>
+      <article><span>IFC-modellen</span><strong id="modelCount">0</strong></article>
+      <article class="ok-card"><span>Altez_IFC aanwezig</span><strong id="okCount">0</strong></article>
+      <article class="bad-card"><span>Actie nodig</span><strong id="missingCount">0</strong></article>
+      <article class="warn-card"><span>Niet gecontroleerd</span><strong id="errorCount">0</strong></article>
+    </section>
+
+    <section class="panel controls-panel">
+      <div class="controls-grid">
+        <label>
+          <span>Propertyset</span>
+          <input id="targetPset" value="Altez_IFC" spellcheck="false">
+        </label>
+        <label>
+          <span>Zoeken</span>
+          <input id="searchInput" type="search" placeholder="Project of model…">
+        </label>
+        <label>
+          <span>Status</span>
+          <select id="statusFilter">
+            <option value="all">Alle statussen</option>
+            <option value="missing">Alleen actie nodig</option>
+            <option value="ok">Alleen OK</option>
+            <option value="error">Alleen controlefouten</option>
+          </select>
+        </label>
+        <label class="checkbox-label">
+          <input id="useCache" type="checkbox" checked>
+          <span>Sla ongewijzigde modelversies over</span>
+        </label>
+      </div>
+      <div class="minor-actions">
+        <button id="clearCacheBtn" class="link-button">Wis lokale scan-cache</button>
+        <button id="copyErrorsBtn" class="link-button">Kopieer fouten</button>
+      </div>
+    </section>
+
+    <section class="panel progress-panel" id="progressPanel" hidden>
+      <div class="progress-head">
+        <strong id="progressTitle">Bezig met controleren…</strong>
+        <span id="progressText"></span>
+      </div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <p id="progressDetail"></p>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="panel-head">
+        <div>
+          <h2>Modelcontrole</h2>
+          <p id="lastScanText">Nog geen controle uitgevoerd.</p>
+        </div>
+        <span id="visibleCount" class="count-pill">0 resultaten</span>
+      </div>
+      <div id="warnings"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Project</th>
+              <th>Model</th>
+              <th>Versie</th>
+              <th>Gewijzigd</th>
+              <th>Controle</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="6" class="empty">Nog geen resultaten.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>ALTEZ IFC Monitor v1.0</span>
+      <span>De scanresultaten en cache blijven in deze browser.</span>
+    </footer>
+  </main>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

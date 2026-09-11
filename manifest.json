@@ -1,0 +1,10 @@
+{
+  "title": "ALTEZ IFC Monitor",
+  "url": "https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/",
+  "icon": "https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/icon.svg",
+  "description": "Controleert IFC-modellen over Trimble Connect-projecten heen op de aanwezigheid van de propertyset Altez_IFC.",
+  "enabled": true,
+  "extensionType": [
+    "project"
+  ]
+}
