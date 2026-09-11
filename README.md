@@ -1,85 +1,71 @@
-# ALTEZ IFC Monitor Web v1.1
+# ALTEZ IFC Monitor Web v1.2
 
-Een statische Trimble Connect **Project Extension** die vanuit de browser alle Trimble Connect-projecten ophaalt die voor de ingelogde gebruiker zichtbaar zijn, de gebruiker eerst projecten laat selecteren, daarna alleen in die geselecteerde projecten `.ifc`/`.ifczip`-bestanden zoekt en controleert of er werkelijk een `IFCPROPERTYSET` met de naam `Altez_IFC` in het bronbestand zit.
+Een statische Trimble Connect **Project Extension** die IFC-modellen controleert op een echte `IFCPROPERTYSET` met de naam `Altez_IFC`.
 
-## Waarom deze versie geen eigen server nodig heeft
+## Wat is nieuw in v1.2
 
-Trimble Connect beheert de gebruikerssessie voor een extensie. De app vraagt via de Workspace API toestemming voor `accesstoken` en gebruikt dat token vervolgens voor de Core API. Daardoor hoeft er geen Trimble-wachtwoord, client secret of access token in GitHub te staan.
+Deze versie is aangepast voor accounts met veel projecten:
 
-De scan draait in de browser. Resultaten/cache worden alleen in `localStorage` van die browser opgeslagen. Het access token zelf wordt **niet** opgeslagen.
+- **Europa staat standaard geselecteerd**.
+- Je kiest eerst één dataregio: Europa, Noord-Amerika of Azië.
+- Voor een bekende regio gaat de app **rechtstreeks naar het regionale Trimble endpoint**; Europa hoeft dus niet eerst alle regio's te ontdekken.
+- De projectlijst wordt **per 50 projecten** opgehaald in plaats van alles tegelijk.
+- Na de eerste 50 kun je onmiddellijk zoeken, selecteren en scannen.
+- Alleen als je dat wilt klik je op **Meer projecten laden** voor de volgende 50.
+- Reeds geladen projectlijsten worden maximaal 24 uur lokaal gecachet en verschijnen bij een volgende opening meteen.
+- **Vernieuw eerste 50** haalt alleen de eerste pagina opnieuw live op.
+- IFC-mappen en IFC-bestanden worden **pas** opgehaald nadat je projecten hebt aangevinkt en op **Controleer geselecteerde projecten** klikt.
 
-## Online zetten via GitHub Pages
+## Normale flow
 
-1. Maak op GitHub een nieuwe publieke repository met exact deze naam: `ALTEZ_IFC_Monitor`.
-2. Upload **de inhoud van deze map** naar de root van de repository (`index.html`, `manifest.json`, `styles.css`, `icon.svg`, map `js`, enz.).
-3. GitHub → repository → **Settings → Pages**.
-4. Kies **Deploy from a branch** → `main` → `/ (root)` → Save.
-5. De app komt dan op:
-   `https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/`
-6. Het manifest staat op:
-   `https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/manifest.json`
+1. Open **ALTEZ IFC Monitor** in Trimble Connect.
+2. Dataregio staat standaard op **Europa**.
+3. Klik op **Laad eerste 50**. Als er een recente cache is, zie je die projecten al meteen.
+4. Zoek op projectnaam of project-ID.
+5. Vink alleen de gewenste projecten aan.
+6. Staat het project nog niet in de geladen lijst, klik dan op **Meer projecten laden**.
+7. Klik op **Controleer geselecteerde projecten**.
+8. Alleen de gekozen projecten worden doorzocht naar `.ifc` en `.ifczip`.
 
-## Toevoegen aan Trimble Connect
+## GitHub Pages
 
-1. Open een Trimble Connect-project in de browser.
-2. Ga naar **Settings → Apps & Capabilities → + Add Custom**.
-3. Gebruik als manifest-URL:
-   `https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/manifest.json`
-4. Open daarna **ALTEZ IFC Monitor** in de projectnavigatie.
-5. Bij de eerste keer vraagt Trimble toestemming om het access token met de extensie te delen. Sta dit toe.
-6. Klik op **Projecten laden**.
-7. Vink alleen de projecten aan die je wilt controleren. Gebruik eventueel zoeken, **Selecteer zichtbare** of **Wis selectie**.
-8. Klik op **Controleer geselecteerde projecten**.
+Repository: `ALTEZ_IFC_Monitor`
 
-De extensie mag in één project geïnstalleerd staan, maar de scan gebruikt het gebruikers-token om ook de andere projecten te controleren die voor diezelfde gebruiker via de Core API zichtbaar zijn.
+Publiceer de inhoud van deze map in de root van de repository en zet GitHub Pages op `main` / `(root)`.
 
-## Wat v1 controleert
+App:
+`https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/`
 
-- eerst een selectielijst met projecten uit alle Trimble Connect-regio's die de ingelogde gebruiker kan zien;
-- alleen de door de gebruiker aangevinkte projecten worden vervolgens gescand;
-- de laatst gekozen projectselectie wordt lokaal in de browser onthouden;
-- `.ifc` en `.ifczip` bestanden in de projectbestandsstructuur;
-- de huidige/beschikbare fileversie uit de Core API;
-- exact de **Naam** van `IFCPROPERTYSET(..., 'Altez_IFC', ...)`, case-insensitive;
-- een losse property die toevallig `Altez_IFC` heet, telt dus niet als geldige propertyset;
-- ongewijzigde versies worden standaard uit de lokale cache gehaald;
-- fouten bij een bestand/project worden als `Controlefout`/waarschuwing getoond en niet foutief als “propertyset ontbreekt”.
+Manifest:
+`https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/manifest.json`
 
-## Dashboard
+## Trimble Connect installeren
 
-Het dashboard toont:
+Gebruik in Trimble Connect bij **Settings -> Apps & Capabilities -> Add Custom** de manifest-URL hierboven.
 
-- aantal daadwerkelijk gecontroleerde projecten;
-- aantal IFC-modellen;
-- aantal modellen met `Altez_IFC`;
-- aantal modellen waar `Altez_IFC` ontbreekt;
-- aantal modellen die door een technische fout niet konden worden gecontroleerd;
-- zoeken/filteren in de projectselectie vóór de scan;
-- zoeken op project/model in de resultaten;
-- filter `Alleen actie nodig`;
-- knop om foutregels naar het klembord te kopiëren.
+De extensie gebruikt de gebruikerssessie van Trimble Connect. Er staat geen Trimble-wachtwoord of permanent access token in GitHub.
 
-## Standalone testmodus
+## IFC-controle
 
-Als je `index.html` buiten Trimble Connect opent, verschijnt een veld om tijdelijk een geldig Trimble **user-context** access token te plakken. Dit token wordt niet opgeslagen. Dit is alleen bedoeld voor technische tests; de normale route is gebruik als Trimble Connect project-extensie.
+De scanner controleert specifiek op een IFC-entiteit van het type `IFCPROPERTYSET` waarvan de naam `Altez_IFC` is, case-insensitive. Een gewone property die toevallig dezelfde tekst bevat telt niet als geldige propertyset.
 
-## Tests in deze levering
+De scanner ondersteunt:
 
-De scanner is getest op:
+- `.ifc`;
+- `.ifczip`;
+- gecomprimeerde IFCZIP;
+- lokale scan-cache op modelversie;
+- filters op OK, ontbrekend en controlefout.
 
-- gewone IFC;
-- case-insensitive propertysetnaam;
-- propertyset verdeeld over meerdere tekst/chunks;
-- voorkomen van een false positive bij een gewone property met dezelfde naam;
-- ongecomprimeerde IFCZIP;
-- deflate-gecomprimeerde IFCZIP;
-- gesimuleerde Trimble regio → projecten → folder tree → IFC → download-URL flow;
-- geldige project-extension manifeststructuur.
+## Cache
 
-## Beperkingen van v1
+Er zijn twee aparte lokale caches:
 
-- De controle start wanneer iemand op **Controleer projecten** klikt; er is nog geen nachtscan/backend.
-- De zichtbare projecten volgen de rechten van de ingelogde gebruiker. Voor volledig accountbreed zicht is een accountadministrator de beste gebruiker/context.
-- Een zeer grote IFCZIP (>300 MB) wordt bewust niet volledig in het browsergeheugen geladen.
-- Resultaten zijn lokaal per browser. Een centraal historisch dashboard en automatische meldingen horen bij v2 met een kleine backend/database.
-- Een live scan tegen jullie echte Trimble-account kan pas na publicatie/installatie met een echte Trimble sessie worden gevalideerd.
+1. **Projectlijstcache**: per dataregio, maximaal 24 uur gebruikt voor snelle heropening.
+2. **IFC-scan-cache**: voorkomt dat een ongewijzigde modelversie opnieuw volledig gecontroleerd wordt.
+
+De projectlijstcache bevat alleen projectmetadata zoals naam, id en regionaal endpoint. Het Trimble access token wordt niet opgeslagen.
+
+## Belangrijk
+
+Deze versie haalt bewust niet automatisch alle Europese projecten op. Dat betekent dat een project dat pas op een latere pagina staat pas zichtbaar wordt nadat je **Meer projecten laden** gebruikt. Dit voorkomt de lange wachttijd van v1.1.

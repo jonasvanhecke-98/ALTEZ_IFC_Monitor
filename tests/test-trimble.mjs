@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { listProjectsAcrossRegions, listProjectFiles, getDownloadUrl, isIfcFile } from '../js/trimble.js';
+import { listProjectsPage, listProjectFiles, getDownloadUrl, isIfcFile } from '../js/trimble.js';
 
 const calls = [];
 globalThis.fetch = async (url) => {
@@ -21,12 +21,17 @@ globalThis.fetch = async (url) => {
   return new Response('Not found', { status: 404 });
 };
 
-const { projects, warnings } = await listProjectsAcrossRegions('token');
-assert.equal(warnings.length, 0);
-assert.equal(projects.length, 1);
-assert.equal(projects[0].name, 'Project Test');
-assert.equal(projects[0]._apiBase, 'https://app21.connect.trimble.com/tc/api/2.0');
+// v1.2 fast path: Europe is fetched directly, one page only, without /regions.
+calls.length = 0;
+const firstPage = await listProjectsPage('europe', 'token', undefined, { page: 1, pageSize: 50 });
+assert.equal(firstPage.projects.length, 1);
+assert.equal(firstPage.projects[0]._apiBase, 'https://app21.connect.trimble.com/tc/api/2.0');
+assert.equal(firstPage.hasMore, false);
+assert.ok(calls.some(x => x.includes('app21.connect.trimble.com/tc/api/2.0/projects?fullyLoaded=false&page=1&pageSize=50')));
+assert.ok(!calls.some(x => x.endsWith('/regions')));
 
+// Existing file/folder/download flow still works on the selected regional project.
+const projects = firstPage.projects;
 const files = await listProjectFiles(projects[0], 'token');
 assert.equal(files.length, 3);
 const ifcs = files.filter(isIfcFile);

@@ -12,10 +12,10 @@
       <div>
         <div class="eyebrow">ALTEZ · BIM QUALITY</div>
         <h1>IFC Monitor</h1>
-        <p>Kies eerst welke Trimble Connect-projecten je wilt controleren en scan daarna alleen die projecten op <strong>Altez_IFC</strong>.</p>
+        <p>Kies eerst een dataregio, laad alleen de projecten die je nodig hebt en scan daarna uitsluitend je selectie op <strong>Altez_IFC</strong>.</p>
       </div>
       <div class="hero-actions">
-        <button id="loadProjectsBtn" class="primary" disabled>Projecten laden</button>
+        <button id="loadProjectsBtn" class="primary" disabled>Laad eerste 50</button>
         <button id="stopBtn" class="secondary" hidden>Stop</button>
       </div>
     </header>
@@ -41,15 +41,33 @@
         </div>
         <span id="projectSelectionCount" class="count-pill">0 geselecteerd</span>
       </div>
-      <div class="project-picker-toolbar">
-        <input id="projectSearchInput" type="search" placeholder="Zoek project…">
+      <div class="project-picker-toolbar v12">
+        <label class="region-field">
+          <span>Dataregio</span>
+          <select id="projectRegionSelect">
+            <option value="europe" selected>Europa</option>
+            <option value="north-america">Noord-Amerika</option>
+            <option value="asia">Azië</option>
+          </select>
+        </label>
+        <label class="project-search-field">
+          <span>Zoek in geladen projecten</span>
+          <input id="projectSearchInput" type="search" placeholder="Projectnaam of project-ID…">
+        </label>
         <button id="selectAllProjectsBtn" class="secondary compact">Selecteer zichtbare</button>
         <button id="clearProjectSelectionBtn" class="secondary compact">Wis selectie</button>
       </div>
+      <div class="project-list-meta">
+        <span>De lijst wordt per 50 projecten geladen; IFC-bestanden worden pas bekeken nadat je op controleren klikt.</span>
+        <span id="projectCacheInfo">live lijst</span>
+      </div>
       <div id="projectList" class="project-list"></div>
       <div class="project-picker-footer">
-        <span id="projectAvailableCount">0 projecten bereikbaar</span>
-        <button id="scanSelectedBtn" class="primary" disabled>Controleer geselecteerde projecten</button>
+        <span id="projectAvailableCount">0 projecten geladen</span>
+        <div class="project-footer-actions">
+          <button id="loadMoreProjectsBtn" class="secondary" hidden>Meer projecten laden</button>
+          <button id="scanSelectedBtn" class="primary" disabled>Controleer geselecteerde projecten</button>
+        </div>
       </div>
     </section>
 
@@ -129,8 +147,8 @@
     </section>
 
     <footer>
-      <span>ALTEZ IFC Monitor v1.1</span>
-      <span>Projectselectie, scanresultaten en cache blijven in deze browser.</span>
+      <span>ALTEZ IFC Monitor v1.2</span>
+      <span>Europa standaard · 50 projecten per laadactie · projectselectie en cache blijven in deze browser.</span>
     </footer>
   </main>
 

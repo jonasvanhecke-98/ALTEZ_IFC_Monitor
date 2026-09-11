@@ -1,5 +1,6 @@
 const CACHE_KEY = 'altez-ifc-monitor:v1:cache';
 const RESULTS_KEY = 'altez-ifc-monitor:v1:last-results';
+const PROJECT_LIST_PREFIX = 'altez-ifc-monitor:v1.2:projects:';
 
 function safeGet(key) {
   try { return localStorage.getItem(key); }
@@ -47,4 +48,36 @@ export function saveLastResults(payload) {
 export function loadLastResults() {
   try { return JSON.parse(safeGet(RESULTS_KEY) || 'null'); }
   catch { return null; }
+}
+
+export function saveProjectListCache(regionSelection, projects, meta = {}) {
+  const compact = (projects || []).map(p => ({
+    id: p.id,
+    name: p.name,
+    rootId: p.rootId || null,
+    _apiBase: p._apiBase,
+    _regionKey: p._regionKey,
+    _regionLabel: p._regionLabel
+  }));
+  const payload = {
+    savedAt: Date.now(),
+    projects: compact,
+    page: Number(meta.page) || null,
+    pageSize: Number(meta.pageSize) || null,
+    hasMore: meta.hasMore !== false,
+    total: Number.isFinite(meta.total) ? meta.total : null
+  };
+  return safeSet(`${PROJECT_LIST_PREFIX}${regionSelection}`, JSON.stringify(payload));
+}
+
+export function loadProjectListCache(regionSelection, maxAgeMs = 30 * 60 * 1000) {
+  try {
+    const value = JSON.parse(safeGet(`${PROJECT_LIST_PREFIX}${regionSelection}`) || 'null');
+    if (!value || !Array.isArray(value.projects) || !Number.isFinite(value.savedAt)) return null;
+    const ageMs = Date.now() - value.savedAt;
+    if (ageMs < 0 || ageMs > maxAgeMs) return null;
+    return { ...value, ageMs };
+  } catch {
+    return null;
+  }
 }
