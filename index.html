@@ -2,11 +2,9 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ALTEZ IFC Monitor</title>
   <link rel="stylesheet" href="./styles.css">
-  <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -14,10 +12,10 @@
       <div>
         <div class="eyebrow">ALTEZ · BIM QUALITY</div>
         <h1>IFC Monitor</h1>
-        <p>Controleert over Trimble Connect-projecten heen of IFC-modellen de propertyset <strong>Altez_IFC</strong> bevatten.</p>
+        <p>Kies eerst welke Trimble Connect-projecten je wilt controleren en scan daarna alleen die projecten op <strong>Altez_IFC</strong>.</p>
       </div>
       <div class="hero-actions">
-        <button id="scanBtn" class="primary" disabled>Controleer projecten</button>
+        <button id="loadProjectsBtn" class="primary" disabled>Projecten laden</button>
         <button id="stopBtn" class="secondary" hidden>Stop</button>
       </div>
     </header>
@@ -35,8 +33,28 @@
       </div>
     </section>
 
+    <section id="projectPickerPanel" class="panel project-picker" hidden>
+      <div class="panel-head project-picker-head">
+        <div>
+          <h2>Projecten selecteren</h2>
+          <p>Alleen aangevinkte projecten worden gecontroleerd.</p>
+        </div>
+        <span id="projectSelectionCount" class="count-pill">0 geselecteerd</span>
+      </div>
+      <div class="project-picker-toolbar">
+        <input id="projectSearchInput" type="search" placeholder="Zoek project…">
+        <button id="selectAllProjectsBtn" class="secondary compact">Selecteer zichtbare</button>
+        <button id="clearProjectSelectionBtn" class="secondary compact">Wis selectie</button>
+      </div>
+      <div id="projectList" class="project-list"></div>
+      <div class="project-picker-footer">
+        <span id="projectAvailableCount">0 projecten bereikbaar</span>
+        <button id="scanSelectedBtn" class="primary" disabled>Controleer geselecteerde projecten</button>
+      </div>
+    </section>
+
     <section class="cards" aria-label="Samenvatting">
-      <article><span>Projecten gevonden</span><strong id="projectCount">0</strong></article>
+      <article><span>Projecten gecontroleerd</span><strong id="projectCount">0</strong></article>
       <article><span>IFC-modellen</span><strong id="modelCount">0</strong></article>
       <article class="ok-card"><span>Altez_IFC aanwezig</span><strong id="okCount">0</strong></article>
       <article class="bad-card"><span>Actie nodig</span><strong id="missingCount">0</strong></article>
@@ -50,7 +68,7 @@
           <input id="targetPset" value="Altez_IFC" spellcheck="false">
         </label>
         <label>
-          <span>Zoeken</span>
+          <span>Zoeken in resultaten</span>
           <input id="searchInput" type="search" placeholder="Project of model…">
         </label>
         <label>
@@ -111,8 +129,8 @@
     </section>
 
     <footer>
-      <span>ALTEZ IFC Monitor v1.0</span>
-      <span>De scanresultaten en cache blijven in deze browser.</span>
+      <span>ALTEZ IFC Monitor v1.1</span>
+      <span>Projectselectie, scanresultaten en cache blijven in deze browser.</span>
     </footer>
   </main>
 

@@ -3,20 +3,26 @@ import { listProjectsAcrossRegions, listProjectFiles, getDownloadUrl, isIfcFile 
 import { scanIfcUrl } from './ifc.js';
 import { versionKey, loadCache, saveCache, clearCache, loadLastResults, saveLastResults } from './cache.js';
 
+const PROJECT_SELECTION_KEY = 'altez-ifc-monitor-project-selection-v1';
 const $ = s => document.querySelector(s);
 const els = {
-  scanBtn: $('#scanBtn'), stopBtn: $('#stopBtn'), banner: $('#connectionBanner'), standalone: $('#standalonePanel'),
+  loadProjectsBtn: $('#loadProjectsBtn'), scanSelectedBtn: $('#scanSelectedBtn'), stopBtn: $('#stopBtn'), banner: $('#connectionBanner'), standalone: $('#standalonePanel'),
   tokenInput: $('#tokenInput'), useTokenBtn: $('#useTokenBtn'), target: $('#targetPset'), search: $('#searchInput'), filter: $('#statusFilter'), useCache: $('#useCache'),
   clearCache: $('#clearCacheBtn'), copyErrors: $('#copyErrorsBtn'), progress: $('#progressPanel'), progressTitle: $('#progressTitle'), progressText: $('#progressText'), progressDetail: $('#progressDetail'), progressBar: $('#progressBar'),
+  projectPicker: $('#projectPickerPanel'), projectList: $('#projectList'), projectSearch: $('#projectSearchInput'), projectSelectionCount: $('#projectSelectionCount'), projectAvailableCount: $('#projectAvailableCount'),
+  selectAllProjects: $('#selectAllProjectsBtn'), clearProjectSelection: $('#clearProjectSelectionBtn'),
   projectCount: $('#projectCount'), modelCount: $('#modelCount'), okCount: $('#okCount'), missingCount: $('#missingCount'), errorCount: $('#errorCount'),
   rows: $('#rows'), warnings: $('#warnings'), lastScan: $('#lastScanText'), visibleCount: $('#visibleCount')
 };
 
 let accessToken = null;
+let availableProjects = [];
+let selectedProjectIds = new Set();
 let results = [];
 let warnings = [];
+let discoveryWarnings = [];
 let controller = null;
-let scanning = false;
+let busy = false;
 let projectTotal = 0;
 
 function esc(value) {
@@ -35,6 +41,33 @@ function statusBadge(row) {
   if (row.status === 'ok') return '<span class="badge ok">● OK</span>';
   if (row.status === 'missing') return `<span class="badge missing">● ${esc(row.targetPset)} ontbreekt</span>`;
   return '<span class="badge error">● Controlefout</span>';
+}
+function loadSavedProjectSelection() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PROJECT_SELECTION_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+function saveProjectSelection() {
+  try { localStorage.setItem(PROJECT_SELECTION_KEY, JSON.stringify([...selectedProjectIds])); } catch {}
+}
+function renderProjectPicker() {
+  const q = els.projectSearch.value.trim().toLowerCase();
+  const visible = availableProjects.filter(p => !q || p.name.toLowerCase().includes(q));
+  els.projectList.innerHTML = visible.length ? visible.map(project => `
+    <label class="project-option">
+      <input type="checkbox" data-project-id="${esc(project.id)}" ${selectedProjectIds.has(project.id) ? 'checked' : ''}>
+      <span class="project-option-text">
+        <strong>${esc(project.name)}</strong>
+        <small>${esc(project.id)}</small>
+      </span>
+    </label>`).join('') : '<div class="empty project-empty">Geen projecten gevonden voor deze zoekopdracht.</div>';
+
+  els.projectSelectionCount.textContent = `${selectedProjectIds.size} geselecteerd`;
+  els.projectAvailableCount.textContent = `${availableProjects.length} project${availableProjects.length === 1 ? '' : 'en'} bereikbaar`;
+  els.scanSelectedBtn.disabled = busy || !accessToken || selectedProjectIds.size === 0;
 }
 function render() {
   const q = els.search.value.trim().toLowerCase();
@@ -69,38 +102,73 @@ function setProgress(done, total, detail) {
   els.progressText.textContent = total > 0 ? `${done} / ${total}` : '';
   els.progressDetail.textContent = detail || '';
 }
-function setScanning(value) {
-  scanning = value;
-  els.scanBtn.disabled = value || !accessToken;
+function setBusy(value, mode = '') {
+  busy = value;
+  els.loadProjectsBtn.disabled = value || !accessToken;
+  els.scanSelectedBtn.disabled = value || !accessToken || selectedProjectIds.size === 0;
   els.stopBtn.hidden = !value;
   els.progress.hidden = !value;
   els.target.disabled = value;
-  if (!value) els.scanBtn.textContent = 'Controleer projecten';
+  els.projectSearch.disabled = value;
+  els.selectAllProjects.disabled = value;
+  els.clearProjectSelection.disabled = value;
+  els.projectList.querySelectorAll('input[type="checkbox"]').forEach(input => input.disabled = value);
+  if (!value) {
+    els.loadProjectsBtn.textContent = availableProjects.length ? 'Projecten vernieuwen' : 'Projecten laden';
+    els.stopBtn.hidden = true;
+  } else if (mode === 'load') {
+    els.loadProjectsBtn.textContent = 'Projecten laden…';
+  }
 }
 
-async function scanAll() {
-  if (scanning || !accessToken) return;
-  const targetPset = els.target.value.trim() || 'Altez_IFC';
+async function loadProjects() {
+  if (busy || !accessToken) return;
   controller = new AbortController();
   const signal = controller.signal;
-  setScanning(true);
-  results = [];
-  warnings = [];
-  projectTotal = 0;
-  render();
+  setBusy(true, 'load');
   els.progressTitle.textContent = 'Projecten ophalen…';
   setProgress(0, 0, 'Trimble Connect-regio’s worden gecontroleerd.');
 
   try {
     const projectResponse = await listProjectsAcrossRegions(accessToken, signal);
-    const projects = projectResponse.projects;
-    warnings.push(...projectResponse.warnings);
-    projectTotal = projects.length;
-    render();
+    availableProjects = projectResponse.projects;
+    discoveryWarnings = projectResponse.warnings || [];
 
+    const saved = loadSavedProjectSelection();
+    selectedProjectIds = new Set(availableProjects.filter(p => saved.has(p.id)).map(p => p.id));
+
+    els.projectPicker.hidden = false;
+    renderProjectPicker();
+    warnings = [...discoveryWarnings];
+    render();
+    setBanner('success', `${availableProjects.length} project(en) gevonden. Kies welke projecten je wilt controleren.`);
+  } catch (error) {
+    if (error.name === 'AbortError') setBanner('warning', 'Ophalen van projecten gestopt.');
+    else setBanner('error', `Projecten ophalen mislukt: ${error.message}`);
+  } finally {
+    setBusy(false);
+    renderProjectPicker();
+  }
+}
+
+async function scanSelected() {
+  if (busy || !accessToken) return;
+  const projects = availableProjects.filter(p => selectedProjectIds.has(p.id));
+  if (!projects.length) return setBanner('warning', 'Selecteer eerst minstens één project.');
+
+  const targetPset = els.target.value.trim() || 'Altez_IFC';
+  controller = new AbortController();
+  const signal = controller.signal;
+  setBusy(true, 'scan');
+  results = [];
+  warnings = [...discoveryWarnings];
+  projectTotal = projects.length;
+  render();
+
+  try {
     const cache = loadCache();
     const projectFiles = [];
-    els.progressTitle.textContent = 'IFC-modellen zoeken…';
+    els.progressTitle.textContent = 'IFC-modellen zoeken in geselecteerde projecten…';
 
     for (let p = 0; p < projects.length; p++) {
       const project = projects[p];
@@ -115,7 +183,7 @@ async function scanAll() {
     }
 
     els.progressTitle.textContent = `IFC-modellen controleren op ${targetPset}…`;
-    setProgress(0, projectFiles.length, `${projectFiles.length} IFC-model(len) gevonden.`);
+    setProgress(0, projectFiles.length, `${projectFiles.length} IFC-model(len) gevonden in ${projects.length} geselecteerde project(en).`);
 
     let done = 0;
     const concurrency = 3;
@@ -161,16 +229,19 @@ async function scanAll() {
     await Promise.all(Array.from({ length: Math.min(concurrency, projectFiles.length || 1) }, worker));
 
     saveCache(cache);
+    saveProjectSelection();
     const finishedAt = new Date().toISOString();
-    saveLastResults({ results, warnings, projectTotal, finishedAt, targetPset });
-    els.lastScan.textContent = `Laatste controle: ${fmtDate(finishedAt)} · propertyset ${targetPset}`;
-    setBanner('success', `Controle klaar: ${results.filter(r => r.status === 'missing').length} model(len) missen ${targetPset}.`);
+    saveLastResults({ results, warnings, projectTotal, finishedAt, targetPset, selectedProjectIds: [...selectedProjectIds] });
+    els.lastScan.textContent = `Laatste controle: ${fmtDate(finishedAt)} · ${projects.length} project(en) · propertyset ${targetPset}`;
+    const missing = results.filter(r => r.status === 'missing').length;
+    setBanner(missing ? 'warning' : 'success', `Controle klaar: ${missing} model(len) missen ${targetPset}.`);
   } catch (error) {
     if (error.name === 'AbortError') setBanner('warning', 'Controle gestopt. Reeds gevonden resultaten blijven zichtbaar.');
     else setBanner('error', `Controle mislukt: ${error.message}`);
   } finally {
-    setScanning(false);
+    setBusy(false);
     render();
+    renderProjectPicker();
   }
 }
 
@@ -181,7 +252,7 @@ async function initialize() {
     warnings = previous.warnings || [];
     projectTotal = previous.projectTotal || 0;
     if (previous.targetPset) els.target.value = previous.targetPset;
-    els.lastScan.textContent = previous.finishedAt ? `Laatste controle: ${fmtDate(previous.finishedAt)} · propertyset ${previous.targetPset || 'Altez_IFC'}` : 'Vorige resultaten geladen.';
+    els.lastScan.textContent = previous.finishedAt ? `Laatste controle: ${fmtDate(previous.finishedAt)} · ${previous.projectTotal || 0} project(en) · propertyset ${previous.targetPset || 'Altez_IFC'}` : 'Vorige resultaten geladen.';
     render();
   }
 
@@ -196,25 +267,47 @@ async function initialize() {
     await connectWorkspace((event, token) => {
       if (event === 'token-refreshed' && token) {
         accessToken = token;
-        els.scanBtn.disabled = false;
-        setBanner('success', 'Verbonden met Trimble Connect. De monitor kan je bereikbare projecten controleren.');
+        els.loadProjectsBtn.disabled = false;
+        setBanner('success', 'Verbonden met Trimble Connect. Laad eerst de projecten en maak daarna je selectie.');
       }
       if (event === 'session-invalid') {
         accessToken = null;
-        els.scanBtn.disabled = true;
+        els.loadProjectsBtn.disabled = true;
+        els.scanSelectedBtn.disabled = true;
         setBanner('warning', 'Trimble-sessie is verlopen. Heropen de extensie of geef opnieuw toestemming.');
       }
     });
     accessToken = await requestAccessToken();
-    els.scanBtn.disabled = false;
-    setBanner('success', 'Verbonden met Trimble Connect. Klik op “Controleer projecten”.');
+    els.loadProjectsBtn.disabled = false;
+    setBanner('success', 'Verbonden met Trimble Connect. Klik op “Projecten laden”.');
   } catch (error) {
     setBanner('error', error.message);
   }
 }
 
-els.scanBtn.addEventListener('click', scanAll);
+els.loadProjectsBtn.addEventListener('click', loadProjects);
+els.scanSelectedBtn.addEventListener('click', scanSelected);
 els.stopBtn.addEventListener('click', () => controller?.abort());
+els.projectSearch.addEventListener('input', renderProjectPicker);
+els.projectList.addEventListener('change', event => {
+  const input = event.target.closest('input[type="checkbox"][data-project-id]');
+  if (!input) return;
+  const id = String(input.dataset.projectId);
+  if (input.checked) selectedProjectIds.add(id); else selectedProjectIds.delete(id);
+  saveProjectSelection();
+  renderProjectPicker();
+});
+els.selectAllProjects.addEventListener('click', () => {
+  const q = els.projectSearch.value.trim().toLowerCase();
+  availableProjects.filter(p => !q || p.name.toLowerCase().includes(q)).forEach(p => selectedProjectIds.add(p.id));
+  saveProjectSelection();
+  renderProjectPicker();
+});
+els.clearProjectSelection.addEventListener('click', () => {
+  selectedProjectIds.clear();
+  saveProjectSelection();
+  renderProjectPicker();
+});
 els.search.addEventListener('input', render);
 els.filter.addEventListener('change', render);
 els.clearCache.addEventListener('click', () => {
@@ -236,8 +329,8 @@ els.useTokenBtn.addEventListener('click', () => {
   if (!token) return setBanner('warning', 'Plak eerst een geldig Trimble user-context access token.');
   accessToken = token;
   els.tokenInput.value = '';
-  els.scanBtn.disabled = false;
-  setBanner('success', 'Tijdelijk access token actief voor deze pagina. Het token wordt niet opgeslagen.');
+  els.loadProjectsBtn.disabled = false;
+  setBanner('success', 'Tijdelijk access token actief. Klik op “Projecten laden” en kies daarna de projecten.');
 });
 
 initialize();

@@ -1,6 +1,6 @@
-# ALTEZ IFC Monitor Web v1.0
+# ALTEZ IFC Monitor Web v1.1
 
-Een statische Trimble Connect **Project Extension** die vanuit de browser alle Trimble Connect-projecten ophaalt die voor de ingelogde gebruiker zichtbaar zijn, alle `.ifc`/`.ifczip`-bestanden zoekt en controleert of er werkelijk een `IFCPROPERTYSET` met de naam `Altez_IFC` in het bronbestand zit.
+Een statische Trimble Connect **Project Extension** die vanuit de browser alle Trimble Connect-projecten ophaalt die voor de ingelogde gebruiker zichtbaar zijn, de gebruiker eerst projecten laat selecteren, daarna alleen in die geselecteerde projecten `.ifc`/`.ifczip`-bestanden zoekt en controleert of er werkelijk een `IFCPROPERTYSET` met de naam `Altez_IFC` in het bronbestand zit.
 
 ## Waarom deze versie geen eigen server nodig heeft
 
@@ -27,13 +27,17 @@ De scan draait in de browser. Resultaten/cache worden alleen in `localStorage` v
    `https://jonasvanhecke-98.github.io/ALTEZ_IFC_Monitor/manifest.json`
 4. Open daarna **ALTEZ IFC Monitor** in de projectnavigatie.
 5. Bij de eerste keer vraagt Trimble toestemming om het access token met de extensie te delen. Sta dit toe.
-6. Klik op **Controleer projecten**.
+6. Klik op **Projecten laden**.
+7. Vink alleen de projecten aan die je wilt controleren. Gebruik eventueel zoeken, **Selecteer zichtbare** of **Wis selectie**.
+8. Klik op **Controleer geselecteerde projecten**.
 
 De extensie mag in één project geïnstalleerd staan, maar de scan gebruikt het gebruikers-token om ook de andere projecten te controleren die voor diezelfde gebruiker via de Core API zichtbaar zijn.
 
 ## Wat v1 controleert
 
-- projecten uit alle Trimble Connect-regio's die de ingelogde gebruiker kan zien;
+- eerst een selectielijst met projecten uit alle Trimble Connect-regio's die de ingelogde gebruiker kan zien;
+- alleen de door de gebruiker aangevinkte projecten worden vervolgens gescand;
+- de laatst gekozen projectselectie wordt lokaal in de browser onthouden;
 - `.ifc` en `.ifczip` bestanden in de projectbestandsstructuur;
 - de huidige/beschikbare fileversie uit de Core API;
 - exact de **Naam** van `IFCPROPERTYSET(..., 'Altez_IFC', ...)`, case-insensitive;
@@ -45,12 +49,13 @@ De extensie mag in één project geïnstalleerd staan, maar de scan gebruikt het
 
 Het dashboard toont:
 
-- aantal gevonden projecten;
+- aantal daadwerkelijk gecontroleerde projecten;
 - aantal IFC-modellen;
 - aantal modellen met `Altez_IFC`;
 - aantal modellen waar `Altez_IFC` ontbreekt;
 - aantal modellen die door een technische fout niet konden worden gecontroleerd;
-- zoeken op project/model;
+- zoeken/filteren in de projectselectie vóór de scan;
+- zoeken op project/model in de resultaten;
 - filter `Alleen actie nodig`;
 - knop om foutregels naar het klembord te kopiëren.
 
