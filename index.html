@@ -3,155 +3,613 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>ALTEZ IFC Monitor</title>
+
   <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
+
   <main class="shell">
+
     <header class="hero">
+
       <div>
         <div class="eyebrow">ALTEZ · BIM QUALITY</div>
+
         <h1>IFC Monitor</h1>
-        <p>Kies eerst een dataregio, laad alleen de projecten die je nodig hebt en scan daarna uitsluitend je selectie op <strong>Altez_IFC</strong>.</p>
+
+        <p>
+          Kies eerst een dataregio, laad alleen de projecten die je nodig hebt
+          en scan daarna uitsluitend je selectie op
+          <strong>Altez_IFC</strong>.
+        </p>
       </div>
+
       <div class="hero-actions">
-        <button id="loadProjectsBtn" class="primary" disabled>Laad eerste 50</button>
-        <button id="stopBtn" class="secondary" hidden>Stop</button>
+
+        <button
+          id="loadProjectsBtn"
+          class="primary"
+          disabled
+        >
+          Laad eerste 50
+        </button>
+
+        <button
+          id="stopBtn"
+          class="secondary"
+          hidden
+        >
+          Stop
+        </button>
+
       </div>
+
     </header>
 
-    <section id="connectionBanner" class="banner info">Verbinding met Trimble Connect wordt opgebouwd…</section>
 
-    <section id="standalonePanel" class="panel standalone" hidden>
+    <!-- Verbinding Trimble Connect -->
+
+    <section
+      id="connectionBanner"
+      class="banner info"
+    >
+      Verbinding met Trimble Connect wordt opgebouwd…
+    </section>
+
+
+    <!-- Standalone testmodus -->
+
+    <section
+      id="standalonePanel"
+      class="panel standalone"
+      hidden
+    >
+
       <div>
+
         <h2>Standalone testmodus</h2>
-        <p>Open je deze pagina buiten Trimble Connect, dan kun je tijdelijk een user-context access token plakken. In Trimble Connect zelf is dit niet nodig.</p>
+
+        <p>
+          Open je deze pagina buiten Trimble Connect, dan kun je tijdelijk
+          een user-context access token plakken.
+          In Trimble Connect zelf is dit niet nodig.
+        </p>
+
       </div>
+
       <div class="token-row">
-        <input id="tokenInput" type="password" autocomplete="off" placeholder="Trimble access token">
-        <button id="useTokenBtn" class="secondary">Gebruik token</button>
+
+        <input
+          id="tokenInput"
+          type="password"
+          autocomplete="off"
+          placeholder="Trimble access token"
+        >
+
+        <button
+          id="useTokenBtn"
+          class="secondary"
+        >
+          Gebruik token
+        </button>
+
       </div>
+
     </section>
 
-    <section id="projectPickerPanel" class="panel project-picker" hidden>
+
+    <!-- Projectselectie -->
+
+    <section
+      id="projectPickerPanel"
+      class="panel project-picker"
+      hidden
+    >
+
       <div class="panel-head project-picker-head">
+
         <div>
+
           <h2>Projecten selecteren</h2>
-          <p>Alleen aangevinkte projecten worden gecontroleerd.</p>
+
+          <p>
+            Alleen aangevinkte projecten worden gecontroleerd.
+          </p>
+
         </div>
-        <span id="projectSelectionCount" class="count-pill">0 geselecteerd</span>
+
+        <span
+          id="projectSelectionCount"
+          class="count-pill"
+        >
+          0 geselecteerd
+        </span>
+
       </div>
+
+
       <div class="project-picker-toolbar v12">
+
+
+        <!-- Regio -->
+
         <label class="region-field">
+
           <span>Dataregio</span>
+
           <select id="projectRegionSelect">
-            <option value="europe" selected>Europa</option>
-            <option value="north-america">Noord-Amerika</option>
-            <option value="asia">Azië</option>
+
+            <option
+              value="europe"
+              selected
+            >
+              Europa
+            </option>
+
+            <option value="north-america">
+              Noord-Amerika
+            </option>
+
+            <option value="asia">
+              Azië
+            </option>
+
           </select>
+
         </label>
+
+
+        <!-- Project zoeken -->
+
         <label class="project-search-field">
+
           <span>Zoek in geladen projecten</span>
-          <input id="projectSearchInput" type="search" placeholder="Projectnaam of project-ID…">
+
+          <input
+            id="projectSearchInput"
+            type="search"
+            placeholder="Projectnaam of project-ID…"
+          >
+
         </label>
-        <button id="selectAllProjectsBtn" class="secondary compact">Selecteer zichtbare</button>
-        <button id="clearProjectSelectionBtn" class="secondary compact">Wis selectie</button>
+
+
+        <button
+          id="selectAllProjectsBtn"
+          class="secondary compact"
+        >
+          Selecteer zichtbare
+        </button>
+
+
+        <button
+          id="clearProjectSelectionBtn"
+          class="secondary compact"
+        >
+          Wis selectie
+        </button>
+
       </div>
+
+
       <div class="project-list-meta">
-        <span>De lijst wordt per 50 projecten geladen; IFC-bestanden worden pas bekeken nadat je op controleren klikt.</span>
-        <span id="projectCacheInfo">live lijst</span>
+
+        <span>
+          De lijst wordt per 50 projecten geladen;
+          IFC-bestanden worden pas bekeken nadat je op controleren klikt.
+        </span>
+
+        <span id="projectCacheInfo">
+          live lijst
+        </span>
+
       </div>
-      <div id="projectList" class="project-list"></div>
+
+
+      <!-- Projectlijst -->
+
+      <div
+        id="projectList"
+        class="project-list"
+      ></div>
+
+
+      <!-- Footer projectselectie -->
+
       <div class="project-picker-footer">
-        <span id="projectAvailableCount">0 projecten geladen</span>
+
+        <span id="projectAvailableCount">
+          0 projecten geladen
+        </span>
+
+
         <div class="project-footer-actions">
-          <button id="loadMoreProjectsBtn" class="secondary" hidden>Meer projecten laden</button>
-          <button id="scanSelectedBtn" class="primary" disabled>Controleer geselecteerde projecten</button>
+
+          <button
+            id="loadMoreProjectsBtn"
+            class="secondary"
+            hidden
+          >
+            Meer projecten laden
+          </button>
+
+
+          <button
+            id="scanSelectedBtn"
+            class="primary"
+            disabled
+          >
+            Controleer geselecteerde projecten
+          </button>
+
         </div>
+
       </div>
+
     </section>
 
-    <section class="cards" aria-label="Samenvatting">
-      <article><span>Projecten gecontroleerd</span><strong id="projectCount">0</strong></article>
-      <article><span>IFC-modellen</span><strong id="modelCount">0</strong></article>
-      <article class="ok-card"><span>Altez_IFC aanwezig</span><strong id="okCount">0</strong></article>
-      <article class="bad-card"><span>Actie nodig</span><strong id="missingCount">0</strong></article>
-      <article class="warn-card"><span>Niet gecontroleerd</span><strong id="errorCount">0</strong></article>
+
+    <!-- Dashboard kaarten -->
+
+    <section
+      class="cards"
+      aria-label="Samenvatting"
+    >
+
+      <article>
+
+        <span>
+          Projecten gecontroleerd
+        </span>
+
+        <strong id="projectCount">
+          0
+        </strong>
+
+      </article>
+
+
+      <article>
+
+        <span>
+          IFC-modellen
+        </span>
+
+        <strong id="modelCount">
+          0
+        </strong>
+
+      </article>
+
+
+      <article class="ok-card">
+
+        <span>
+          Altez_IFC aanwezig
+        </span>
+
+        <strong id="okCount">
+          0
+        </strong>
+
+      </article>
+
+
+      <article class="bad-card">
+
+        <span>
+          Actie nodig
+        </span>
+
+        <strong id="missingCount">
+          0
+        </strong>
+
+      </article>
+
+
+      <article class="warn-card">
+
+        <span>
+          Niet gecontroleerd
+        </span>
+
+        <strong id="errorCount">
+          0
+        </strong>
+
+      </article>
+
     </section>
+
+
+    <!-- Filters / instellingen -->
 
     <section class="panel controls-panel">
+
       <div class="controls-grid">
+
+
+        <!-- Propertyset -->
+
         <label>
-          <span>Propertyset</span>
-          <input id="targetPset" value="Altez_IFC" spellcheck="false">
+
+          <span>
+            Propertyset
+          </span>
+
+          <input
+            id="targetPset"
+            value="Altez_IFC"
+            spellcheck="false"
+          >
+
         </label>
+
+
+        <!-- Zoeken resultaten -->
+
         <label>
-          <span>Zoeken in resultaten</span>
-          <input id="searchInput" type="search" placeholder="Project of model…">
+
+          <span>
+            Zoeken in resultaten
+          </span>
+
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Project of model…"
+          >
+
         </label>
+
+
+        <!-- Status filter -->
+
         <label>
-          <span>Status</span>
+
+          <span>
+            Status
+          </span>
+
           <select id="statusFilter">
-            <option value="all">Alle statussen</option>
-            <option value="missing">Alleen actie nodig</option>
-            <option value="ok">Alleen OK</option>
-            <option value="error">Alleen controlefouten</option>
+
+            <option value="all">
+              Alle statussen
+            </option>
+
+            <option value="missing">
+              Alleen actie nodig
+            </option>
+
+            <option value="ok">
+              Alleen OK
+            </option>
+
+            <option value="error">
+              Alleen controlefouten
+            </option>
+
           </select>
+
         </label>
+
+
+        <!-- Cache -->
+
         <label class="checkbox-label">
-          <input id="useCache" type="checkbox" checked>
-          <span>Sla ongewijzigde modelversies over</span>
+
+          <input
+            id="useCache"
+            type="checkbox"
+            checked
+          >
+
+          <span>
+            Sla ongewijzigde modelversies over
+          </span>
+
         </label>
+
       </div>
+
+
       <div class="minor-actions">
-        <button id="clearCacheBtn" class="link-button">Wis lokale scan-cache</button>
-        <button id="copyErrorsBtn" class="link-button">Kopieer fouten</button>
+
+        <button
+          id="clearCacheBtn"
+          class="link-button"
+        >
+          Wis lokale scan-cache
+        </button>
+
+        <button
+          id="copyErrorsBtn"
+          class="link-button"
+        >
+          Kopieer fouten
+        </button>
+
       </div>
+
     </section>
 
-    <section class="panel progress-panel" id="progressPanel" hidden>
+
+    <!-- Progress -->
+
+    <section
+      class="panel progress-panel"
+      id="progressPanel"
+      hidden
+    >
+
       <div class="progress-head">
-        <strong id="progressTitle">Bezig met controleren…</strong>
+
+        <strong id="progressTitle">
+          Bezig met controleren…
+        </strong>
+
         <span id="progressText"></span>
+
       </div>
-      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+
+
+      <div class="progress-track">
+
+        <div
+          id="progressBar"
+          class="progress-bar"
+        ></div>
+
+      </div>
+
+
       <p id="progressDetail"></p>
+
     </section>
+
+
+    <!-- Resultaten -->
 
     <section class="panel results-panel">
+
       <div class="panel-head">
+
         <div>
-          <h2>Modelcontrole</h2>
-          <p id="lastScanText">Nog geen controle uitgevoerd.</p>
+
+          <h2>
+            Modelcontrole
+          </h2>
+
+          <p id="lastScanText">
+            Nog geen controle uitgevoerd.
+          </p>
+
         </div>
-        <span id="visibleCount" class="count-pill">0 resultaten</span>
+
+        <span
+          id="visibleCount"
+          class="count-pill"
+        >
+          0 resultaten
+        </span>
+
       </div>
+
+
       <div id="warnings"></div>
+
+
       <div class="table-wrap">
+
         <table>
+
           <thead>
+
             <tr>
-              <th>Status</th>
-              <th>Project</th>
-              <th>Model</th>
-              <th>Versie</th>
-              <th>Gewijzigd</th>
-              <th>Controle</th>
+
+              <th>
+                Status
+              </th>
+
+              <th>
+                Project
+              </th>
+
+              <th>
+                Model
+              </th>
+
+              <th>
+                Versie
+              </th>
+
+              <th>
+                Gewijzigd
+              </th>
+
+              <th>
+                Controle
+              </th>
+
             </tr>
+
           </thead>
+
+
           <tbody id="rows">
-            <tr><td colspan="6" class="empty">Nog geen resultaten.</td></tr>
+
+            <tr>
+
+              <td
+                colspan="6"
+                class="empty"
+              >
+                Nog geen resultaten.
+              </td>
+
+            </tr>
+
           </tbody>
+
         </table>
+
       </div>
+
     </section>
 
+
+    <!-- Footer -->
+
     <footer>
-      <span>ALTEZ IFC Monitor v1.2</span>
-      <span>Europa standaard · 50 projecten per laadactie · projectselectie en cache blijven in deze browser.</span>
+
+      <span>
+        ALTEZ IFC Monitor v1.2.1
+      </span>
+
+      <span>
+        Europa standaard · 50 projecten per laadactie ·
+        projectselectie en cache blijven in deze browser.
+      </span>
+
     </footer>
+
   </main>
 
-  <script type="module" src="./js/app.js"></script>
+
+  <!--
+    ============================================================
+    TRIMBLE CONNECT WORKSPACE API
+    ============================================================
+
+    Deze moet geladen zijn VOOR app.js.
+
+    Hierdoor wordt beschikbaar:
+
+    window.TrimbleConnectWorkspace
+
+    waarna workspace.js verbinding kan maken met Trimble Connect.
+  -->
+
+  <script
+    src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"
+  ></script>
+
+
+  <!--
+    ============================================================
+    ALTEZ IFC MONITOR
+    ============================================================
+  -->
+
+  <script
+    type="module"
+    src="./js/app.js"
+  ></script>
+
+
 </body>
 </html>
